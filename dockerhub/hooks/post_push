@@ -7,8 +7,6 @@ echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /e
 curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
 apt-get update && apt-get install -y google-cloud-sdk
 
-printenv
-
 # deploy master branch to dev, tags to prod
 if [ "$SOURCE_BRANCH" = "master" ]; then
 	GCLOUD_SERVICE_KEY="$GCLOUD_SERVICE_KEY_PROD"
@@ -18,12 +16,19 @@ else
 	GCLOUD_PROJECT_ID="$GCLOUD_PROJECT_ID_DEV"
 fi
 
+# get the image name
+# $DOCKER_REPO is something like index.docker.io/tridnguyen/forms
+# split by / and get the last element
+REPO_NAME=$(echo "$DOCKER_REPO" | awk -F'/' '{print $NF}')
+
+printenv
+
 echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
 gcloud config set project $GCLOUD_PROJECT_ID
 gcloud --quiet auth configure-docker
-export GCLOUD_IMAGE_TAG="us.gcr.io/$GCLOUD_PROJECT_ID/ledge:$DOCKER_TAG"
+export GCLOUD_IMAGE_TAG="us.gcr.io/$GCLOUD_PROJECT_ID/$REPO_NAME:$DOCKER_TAG"
 docker tag $IMAGE_NAME $GCLOUD_IMAGE_TAG
 docker push $GCLOUD_IMAGE_TAG
 
 gcloud config set run/region us-central1
-gcloud beta run deploy ledge --image $GCLOUD_IMAGE_TAG
+gcloud beta run deploy $REPO_NAME --image $GCLOUD_IMAGE_TAG
