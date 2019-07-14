@@ -4,11 +4,12 @@
 # $1: status (started, succeeded, failed, timed_out) https://docs.rollbar.com/reference#post-deploy
 rollbar_notify() {
 	if [ -n "$ROLLBAR_ACCESS_TOKEN" ]; then
-		curl --request POST \
+		echo "ROLLBAR_ACCESS_TOKEN found. Will report to Rollbar."
+		curl -vs --request POST \
 			--url https://api.rollbar.com/api/1/deploy/ \
 			--header 'content-type: application/json' \
 			--data "{\"access_token\":\"$ROLLBAR_ACCESS_TOKEN\",\
-				\"environment\":\"$ENVIRONMENT\",\
+				\"environment\":\"$ROLLBAR_ENVIRONMENT\",\
 				\"revision\":\"$SOURCE_COMMIT\",\
 				\"status\":\"${1-succeeded}\"}"
 	fi
@@ -25,11 +26,11 @@ apt-get update && apt-get install -y google-cloud-sdk
 if [ "$SOURCE_BRANCH" = "master" ]; then
 	GCLOUD_SERVICE_KEY="$GCLOUD_SERVICE_KEY_PROD"
 	GCLOUD_PROJECT_ID="$GCLOUD_PROJECT_ID_PROD"
-	ENVIRONMENT="PROD"
+	ROLLBAR_ENVIRONMENT="production"
 else
 	GCLOUD_SERVICE_KEY="$GCLOUD_SERVICE_KEY_DEV"
 	GCLOUD_PROJECT_ID="$GCLOUD_PROJECT_ID_DEV"
-	ENVIRONMENT="DEV"
+	ROLLBAR_ENVIRONMENT="development"
 fi
 
 # get the image name
