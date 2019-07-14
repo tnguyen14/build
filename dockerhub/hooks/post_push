@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# rollbar deploy notification
+# $1: status (started, succeeded, failed, timed_out) https://docs.rollbar.com/reference#post-deploy
+rollbar_notify() {
+	if [ -n "$ROLLBAR_ACCESS_TOKEN" ]; then
+		curl --request POST \
+			--url https://api.rollbar.com/api/1/deploy/ \
+			--header 'content-type: application/json' \
+			--data "{\"access_token\":\"$ROLLBAR_ACCESS_TOKEN\",\
+				\"environment\":\"$ENVIRONMENT\",\"status\":\"${1-succeeded}\"}"
+	fi
+}
+
 # install google cloud sdk, instructions from https://cloud.google.com/sdk/docs/downloads-apt-get
 
 export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
@@ -11,9 +23,11 @@ apt-get update && apt-get install -y google-cloud-sdk
 if [ "$SOURCE_BRANCH" = "master" ]; then
 	GCLOUD_SERVICE_KEY="$GCLOUD_SERVICE_KEY_PROD"
 	GCLOUD_PROJECT_ID="$GCLOUD_PROJECT_ID_PROD"
+	ENVIRONMENT="PROD"
 else
 	GCLOUD_SERVICE_KEY="$GCLOUD_SERVICE_KEY_DEV"
 	GCLOUD_PROJECT_ID="$GCLOUD_PROJECT_ID_DEV"
+	ENVIRONMENT="DEV"
 fi
 
 # get the image name
@@ -22,6 +36,8 @@ fi
 REPO_NAME=$(echo "$DOCKER_REPO" | awk -F'/' '{print $NF}')
 
 printenv
+
+rollbar_notify 'started'
 
 echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
 gcloud config set project $GCLOUD_PROJECT_ID
@@ -32,3 +48,5 @@ docker push $GCLOUD_IMAGE_TAG
 
 gcloud config set run/region us-central1
 gcloud beta run deploy $REPO_NAME --image $GCLOUD_IMAGE_TAG
+
+rollbar_notify
