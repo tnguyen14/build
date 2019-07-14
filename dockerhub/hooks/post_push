@@ -8,7 +8,9 @@ rollbar_notify() {
 			--url https://api.rollbar.com/api/1/deploy/ \
 			--header 'content-type: application/json' \
 			--data "{\"access_token\":\"$ROLLBAR_ACCESS_TOKEN\",\
-				\"environment\":\"$ENVIRONMENT\",\"status\":\"${1-succeeded}\"}"
+				\"environment\":\"$ENVIRONMENT\",\
+				\"revision\":\"$SOURCE_COMMIT\",\
+				\"status\":\"${1-succeeded}\"}"
 	fi
 }
 
