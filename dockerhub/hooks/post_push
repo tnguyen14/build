@@ -52,4 +52,6 @@ docker push $GCLOUD_IMAGE_TAG
 gcloud config set run/region us-central1
 gcloud beta run deploy $REPO_NAME --image $GCLOUD_IMAGE_TAG --platform managed
 
+echo $?
+
 rollbar_notify
