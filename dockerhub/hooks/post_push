@@ -11,6 +11,7 @@ rollbar_notify() {
 			--data "{\"access_token\":\"$ROLLBAR_ACCESS_TOKEN\",\
 				\"environment\":\"$ROLLBAR_ENVIRONMENT\",\
 				\"revision\":\"$SOURCE_COMMIT\",\
+				\"local_username\":\"dockerhub\",\
 				\"status\":\"${1-succeeded}\"}"
 	fi
 }
