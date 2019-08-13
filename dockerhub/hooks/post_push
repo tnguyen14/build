@@ -53,6 +53,9 @@ docker push $GCLOUD_IMAGE_TAG
 gcloud config set run/region us-central1
 gcloud beta run deploy $REPO_NAME --image $GCLOUD_IMAGE_TAG --platform managed
 
-echo $?
-
-rollbar_notify
+local deploy_status=$?
+if [ $deploy_status -ne 0 ]; then
+	rollbar_notify 'failed'
+else
+	rollbar_notify
+fi
